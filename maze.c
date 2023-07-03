@@ -50,9 +50,9 @@ const static char flag_updae[4][2] =
 };
 
 unsigned char*
-generate_maze(int len, int wid, int draw_in_terminal)
+generate_maze(int len, int wid)
 {
-    int i, j;
+    int i, j, k;
     unsigned char opt_keys[wid][len];
     unsigned char key;
     unsigned char **maze;
@@ -111,11 +111,31 @@ generate_maze(int len, int wid, int draw_in_terminal)
             }
         } while(key != 0x00);
     }
+
+    // return bit stream
+    k = 0;
+    unsigned char *bit_stream = malloc(sizeof(char) * len * wid);
+    for(i = 0; i < wid; i++)
+    {
+        for(j = 0; j < len; j++) {
+            bit_stream[k++] = maze[i][j];
+        }
+    }
+    // free memory
+    for(i = 0; i < wid; i++)
+        free(maze[i]);
+    free(maze);
+    return bit_stream;
 }
 
 
 int
 main()
 {
-    generate_maze(10, 10, 1);
+    unsigned char *ret;
+    int i;
+    int len = 5, wid = 5;
+    ret = generate_maze(len, wid);
+    for(i = 0; i < len*wid; i++)
+        printf("%d ",ret[i]);
 }
