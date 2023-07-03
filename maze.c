@@ -50,34 +50,34 @@ const static char flag_updae[4][2] =
 };
 
 unsigned char*
-generate_maze(int len, int wid)
+generate(int length, int width)
 {
     int i, j, k;
-    unsigned char opt_keys[wid][len];
+    unsigned char opt_keys[width][length];
     unsigned char key;
     unsigned char **maze;
-    MAZE_TYPE dig_stack[len * wid][2];
+    MAZE_TYPE dig_stack[length * width][2];
     long long int top = -1;
     long long int cur_y, cur_x, next_y, next_x, cur_dir;
 
-    maze = malloc(sizeof(char*) * wid);
-    for(i = 0; i < wid; i++)
+    maze = malloc(sizeof(char*) * width);
+    for(i = 0; i < width; i++)
     {
-        maze[i] = malloc(sizeof(char) * len);
-        memset(maze[i], 0, len);
+        maze[i] = malloc(sizeof(char) * length);
+        memset(maze[i], 0, length);
     }
 
     // random direction options
     srand((unsigned int)time(NULL));
-    for(i = 0; i < wid; i++)
-        for(j = 0; j < len; j++)
+    for(i = 0; i < width; i++)
+        for(j = 0; j < length; j++)
             opt_keys[i][j] = direct_opt[rand() % 24];
     /*
         default startpoint y = 0, x = 0
-        ---------> x coordinate(len)
+        ---------> x coordinate(length)
         |
         |
-        | y coordinate(wid)
+        | y coordinate(width)
     */
     dig_stack[++top][0] = 0;
     dig_stack[top][1] = 0;
@@ -99,7 +99,7 @@ generate_maze(int len, int wid)
             next_y = cur_y + pos_update[cur_dir][0];
             next_x = cur_x + pos_update[cur_dir][1];
 
-            if(next_y < wid && next_x < len && next_y >= 0 && next_x >= 0 &&
+            if(next_y < width && next_x < length && next_y >= 0 && next_x >= 0 &&
                 !(maze[next_y][next_x] & _FLAG_VISITED))
             {
                 opt_keys[cur_y][cur_x] = key;
@@ -114,15 +114,13 @@ generate_maze(int len, int wid)
 
     // return bit stream
     k = 0;
-    unsigned char *bit_stream = malloc(sizeof(char) * len * wid);
-    for(i = 0; i < wid; i++)
-    {
-        for(j = 0; j < len; j++) {
+    unsigned char *bit_stream = malloc(sizeof(char) * length * width);
+    for(i = 0; i < width; i++)
+        for(j = 0; j < length; j++)
             bit_stream[k++] = maze[i][j];
-        }
-    }
+
     // free memory
-    for(i = 0; i < wid; i++)
+    for(i = 0; i < width; i++)
         free(maze[i]);
     free(maze);
     return bit_stream;
