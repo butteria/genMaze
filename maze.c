@@ -127,15 +127,3 @@ generate_maze(int len, int wid)
     free(maze);
     return bit_stream;
 }
-
-
-int
-main()
-{
-    unsigned char *ret;
-    int i;
-    int len = 5, wid = 5;
-    ret = generate_maze(len, wid);
-    for(i = 0; i < len*wid; i++)
-        printf("%d ",ret[i]);
-}
