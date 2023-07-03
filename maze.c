@@ -111,34 +111,6 @@ generate_maze(int len, int wid, int draw_in_terminal)
             }
         } while(key != 0x00);
     }
-
-    if(draw_in_terminal)
-    {
-        long long int lines = wid * 2 - 1;
-
-        printf(" --");
-        for(j = 1; j < len; j++)
-            printf("---");
-        printf("\n");
-        for(i = 1; i <= lines; i++)
-        {
-            if(i % 2)
-            {
-                for(j = 0; j < len; j++)
-                    maze[i>>1][j] & _FLAG_WEST_PASS ? printf("   ") : printf("|  ");
-            }
-            else {
-                maze[i>>1][0] & _FLAG_NORTH_PASS ? printf("   ") : printf(" --");
-                for(j = 1; j < len; j++)
-                    maze[i>>1][j] & _FLAG_NORTH_PASS ?  printf("   ") : printf("---");
-            }
-            printf("|  ");
-            printf("\n");
-        }
-        printf(" --");
-        for(j = 1; j < len; j++)
-            printf("---");
-    }
 }
 
 
