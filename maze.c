@@ -8,40 +8,37 @@
 #include <time.h>
 
 /* MAZE SIZE */
-#define MAZE_TYPE MINI
+#define MAZE_TYPE SMALL
 #define MINI char
 #define SMALL short int
 #define MEDIUM int
 #define BIG long long int
 
-#define _FLAG_WEST_PASS  0b00001000
-#define _FLAG_NORTH_PASS 0b00000100
-#define _FLAG_EAST_PASS  0b00000010
-#define _FLAG_SOUTH_PASS 0b00000001
-#define _FLAG_VISITED    0b00010000
+#define _FLAG_VISITED    0x10
+#define _FLAG_WEST_PASS  0x08
+#define _FLAG_NORTH_PASS 0x04
+#define _FLAG_EAST_PASS  0x02
+#define _FLAG_SOUTH_PASS 0x01
+#define _DIR_WEST        3
+#define _DIR_NORTH       2
+#define _DIR_EAST        1
+#define _DIR_SOUTH       0
 
-/*
-    direction bit info:
-        11  3 west
-        10  2 north
-        01  1 east
-        00  0 south
-*/
-const static unsigned char direct_opt[24] =
+signed char direct_opt[24] =
 {
     0xe4, 0xe1, 0xd8, 0xd2, 0xc9, 0xc6,
     0xb4, 0xb1, 0x9c, 0x93, 0x8d, 0x87,
     0x78, 0x72, 0x6c, 0x63, 0x4e, 0x4b,
     0x39, 0x36, 0x2d, 0x27, 0x1e, 0x1b,
 };
-const static char pos_update[4][2] =
+static char pos_update[4] =
 {
-    {  1,  0 }, // south
-    {  0,  1 }, // east
-    { -1,  0 }, // north
-    {  0, -1 }, // west
+     0, // south
+     1, // east
+     0, // north
+    -1, // west
 };
-const static char flag_updae[4][2] =
+const static unsigned char flag_updae[4][2] =
 {
     { _FLAG_SOUTH_PASS, _FLAG_NORTH_PASS },
     {  _FLAG_EAST_PASS,  _FLAG_WEST_PASS },
@@ -50,28 +47,31 @@ const static char flag_updae[4][2] =
 };
 
 unsigned char*
-generate(int length, int width)
-{
-    int i, j, k;
-    unsigned char opt_keys[width][length];
-    unsigned char key;
-    unsigned char **maze;
-    MAZE_TYPE dig_stack[length * width][2];
+generate(long long int length, long long int width)
+{   /*
+        Time: ( N^2 )
+        Space: ( 2 * (unsigned char)N^2 + (MAZE_TYPE)N^2 )
+    */
+    int i;
+    long long int size = width * length;
     long long int top = -1;
-    long long int cur_y, cur_x, next_y, next_x, cur_dir;
+    unsigned char key, dir;
+    long long int cur_yx, next_yx;
+    unsigned char *opt_keys = NULL;
+    MAZE_TYPE *dig_stack = NULL;
+    unsigned char *maze = NULL;
 
-    maze = malloc(sizeof(char*) * width);
-    for(i = 0; i < width; i++)
-    {
-        maze[i] = malloc(sizeof(char) * length);
-        memset(maze[i], 0, length);
-    }
+    maze = malloc(sizeof(unsigned char) * size);
+    opt_keys = malloc(sizeof(unsigned char) * size);
+    dig_stack = malloc(sizeof(MAZE_TYPE) * size);
+    memset(maze, 0, size);
 
     // random direction options
     srand((unsigned int)time(NULL));
-    for(i = 0; i < width; i++)
-        for(j = 0; j < length; j++)
-            opt_keys[i][j] = direct_opt[rand() % 24];
+    for(i = 0; i < size; i++)
+            opt_keys[i] = direct_opt[rand() % 24];
+    pos_update[0] = length;
+    pos_update[2] = -length;
     /*
         default startpoint y = 0, x = 0
         ---------> x coordinate(length)
@@ -79,49 +79,66 @@ generate(int length, int width)
         |
         | y coordinate(width)
     */
-    dig_stack[++top][0] = 0;
-    dig_stack[top][1] = 0;
+    dig_stack[++top] = 0;
     while(top != -1)
     {
         // get dig position and set visited.
-        cur_y = dig_stack[top][0];
-        cur_x = dig_stack[top][1];
-        maze[cur_y][cur_x] |= _FLAG_VISITED;
+        cur_yx = dig_stack[top];
+        maze[cur_yx] |= _FLAG_VISITED;
 
         // check dig directions.
-        key = opt_keys[cur_y][cur_x];
+        key = opt_keys[cur_yx];
         do
         {
-            cur_dir = key & 0x03;
+            dir = key & 0x03;
             key >>= 2;
             if(key == 0x00)
                 --top;
-            next_y = cur_y + pos_update[cur_dir][0];
-            next_x = cur_x + pos_update[cur_dir][1];
+            next_yx = cur_yx + pos_update[dir];
 
-            if(next_y < width && next_x < length && next_y >= 0 && next_x >= 0 &&
-                !(maze[next_y][next_x] & _FLAG_VISITED))
+            if(next_yx >= 0 && next_yx < size && !(maze[next_yx] & _FLAG_VISITED))
             {
-                opt_keys[cur_y][cur_x] = key;
-                maze[cur_y][cur_x] |= flag_updae[cur_dir][0];
-                maze[next_y][next_x] |= flag_updae[cur_dir][1];
-                dig_stack[++top][0] = next_y;
-                dig_stack[top][1] = next_x;
+                opt_keys[cur_yx] = key;
+                maze[cur_yx] |= flag_updae[dir][0];
+                maze[next_yx] |= flag_updae[dir][1];
+                dig_stack[++top] = next_yx;
                 break;
             }
         } while(key != 0x00);
     }
 
-    // return bit stream
-    k = 0;
-    unsigned char *bit_stream = malloc(sizeof(char) * length * width);
-    for(i = 0; i < width; i++)
-        for(j = 0; j < length; j++)
-            bit_stream[k++] = maze[i][j];
+    long long int lines = width * 2 - 1;
+    int j;
+    printf(" --");
+    for(j = 1; j < length; j++)
+        printf("---");
+    printf("\n");
+    for(i = 1; i <= lines; i++)
+    {
+        if(i % 2)
+        {
+            for(j = 0; j < length; j++)
+                maze[(i>>1) * length + j] & _FLAG_WEST_PASS ? printf("   ") : printf("|  ");
+        }
+        else {
+            maze[(i>>1) * length] & _FLAG_NORTH_PASS ? printf("   ") : printf(" --");
+            for(j = 1; j < length; j++)
+                maze[(i>>1) * length + j] & _FLAG_NORTH_PASS ?  printf("   ") : printf("---");
+        }
+        printf("|  \n");
+    }
+    printf(" --");
+    for(j = 1; j < length; j++)
+        printf("---");
 
-    // free memory
-    for(i = 0; i < width; i++)
-        free(maze[i]);
-    free(maze);
-    return bit_stream;
+    free(opt_keys);
+    free(dig_stack);
+    return maze;
 }
+ int main()
+ {
+    unsigned char *ret;
+    int width = 5, length = 5;
+    int size = width * length;
+    ret = generate(length, width);
+ }
