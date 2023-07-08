@@ -1,18 +1,17 @@
-SOURCE	:=maze.c
-OBJS	:=maze.o
-TARGET	:=./libso/libmaze.so
+TARGET	 = maze
+SOURCE	 = $(wildcard *.c)
+OBJS 	 = $(patsubst %.c, %.o, $(SOURCE))
+INC 	 = -I.
 
 CC		:=gcc
 
-all: $(TARGET)
-clean:
-	rm *.o  $(TARGET)
-#link
 $(TARGET):$(OBJS)
-	$(CC) -shared $^ -o $@
-#clear
-	rm -rf *.o
+	$(CC) $(OBJS) -o $(TARGET)
 
 #compile
-$(OBJS):$(SOURCE)
-	$(CC) -c -fpic $^ -o $@
+$(OBJ): $(SRC)
+	gcc -c $(SRC) $(INC) -o $(OBJ)
+
+clean:
+	rm -rf *.o  $(TARGET)
+.PHONY: clean ALL
