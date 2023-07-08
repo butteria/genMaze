@@ -74,7 +74,8 @@ generate(long long int length, long long int width)
         |
         | y coordinate(width)
     */
-    dig_stack[++top] = 0;
+    // choose start(y, x) randomly.
+    dig_stack[++top] = (rand() % width) * length + rand() % length;
     while(top != -1)
     {
         // get dig position and set visited.
