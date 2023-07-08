@@ -4,6 +4,9 @@ TARGET	:=./libso/libmaze.so
 
 CC		:=gcc
 
+all: $(TARGET)
+clean:
+	rm *.o  $(TARGET)
 #link
 $(TARGET):$(OBJS)
 	$(CC) -shared $^ -o $@

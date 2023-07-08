@@ -6,25 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "maze.h"
 
-/* MAZE SIZE */
-#define MAZE_TYPE SMALL
-#define MINI char
-#define SMALL short int
-#define MEDIUM int
-#define BIG long long int
-
-#define _FLAG_VISITED    0x10
-#define _FLAG_WEST_PASS  0x08
-#define _FLAG_NORTH_PASS 0x04
-#define _FLAG_EAST_PASS  0x02
-#define _FLAG_SOUTH_PASS 0x01
-#define _DIR_WEST        3
-#define _DIR_NORTH       2
-#define _DIR_EAST        1
-#define _DIR_SOUTH       0
-
-signed char direct_opt[24] =
+const unsigned char direct_opt[24] =
 {
     0xe4, 0xe1, 0xd8, 0xd2, 0xc9, 0xc6,
     0xb4, 0xb1, 0x9c, 0x93, 0x8d, 0x87,
@@ -50,23 +34,34 @@ unsigned char*
 generate(long long int length, long long int width)
 {   /*
         Time: ( N^2 )
-        Space: ( 2 * (unsigned char)N^2 + (MAZE_TYPE)N^2 )
+        Space: ( 3 * (unsigned char)N^2 + (MAZE_TYPE)N^2 )
     */
     int i;
     long long int size = width * length;
     long long int top = -1;
     unsigned char key, dir;
     long long int cur_yx, next_yx;
-    unsigned char *opt_keys = NULL;
-    MAZE_TYPE *dig_stack = NULL;
-    unsigned char *maze = NULL;
+    unsigned char *opt_keys , *limit_dirs, *maze;
+    MAZE_TYPE *dig_stack;
 
     maze = malloc(sizeof(unsigned char) * size);
     opt_keys = malloc(sizeof(unsigned char) * size);
+    limit_dirs = malloc(sizeof(unsigned char) * size);
     dig_stack = malloc(sizeof(MAZE_TYPE) * size);
     memset(maze, 0, size);
 
-    // random direction options
+    // set direction limitations.
+    memset(limit_dirs, 0, size);
+    for(i = 0; i < length; i++)
+        limit_dirs[i] |= _LIMIT_DIR_NORTH;
+    for(i = 0; i < length; i++)
+        limit_dirs[size - 1 - i] |= _LIMIT_DIR_SOUTH;
+    for(i = 0; i < size; i += length)
+        limit_dirs[i] |= _LIMIT_DIR_WEST;
+    for(i = length - 1; i < size; i += length)
+        limit_dirs[i] |= _LIMIT_DIR_EAST;
+
+    // random direction options.
     srand((unsigned int)time(NULL));
     for(i = 0; i < size; i++)
             opt_keys[i] = direct_opt[rand() % 24];
@@ -94,8 +89,11 @@ generate(long long int length, long long int width)
             key >>= 2;
             if(key == 0x00)
                 --top;
-            next_yx = cur_yx + pos_update[dir];
+            // check direction limitations ?
+            if(limit_dirs[cur_yx] >> dir & 0x01)
+                continue;
 
+            next_yx = cur_yx + pos_update[dir];
             if(next_yx >= 0 && next_yx < size && !(maze[next_yx] & _FLAG_VISITED))
             {
                 opt_keys[cur_yx] = key;
@@ -107,38 +105,51 @@ generate(long long int length, long long int width)
         } while(key != 0x00);
     }
 
-    long long int lines = width * 2 - 1;
-    int j;
-    printf(" --");
-    for(j = 1; j < length; j++)
-        printf("---");
-    printf("\n");
-    for(i = 1; i <= lines; i++)
-    {
-        if(i % 2)
-        {
-            for(j = 0; j < length; j++)
-                maze[(i>>1) * length + j] & _FLAG_WEST_PASS ? printf("   ") : printf("|  ");
-        }
-        else {
-            maze[(i>>1) * length] & _FLAG_NORTH_PASS ? printf("   ") : printf(" --");
-            for(j = 1; j < length; j++)
-                maze[(i>>1) * length + j] & _FLAG_NORTH_PASS ?  printf("   ") : printf("---");
-        }
-        printf("|  \n");
-    }
-    printf(" --");
-    for(j = 1; j < length; j++)
-        printf("---");
-
     free(opt_keys);
     free(dig_stack);
     return maze;
 }
- int main()
- {
-    unsigned char *ret;
-    int width = 5, length = 5;
-    int size = width * length;
-    ret = generate(length, width);
- }
+
+void
+draw_in_terminal(unsigned char *maze, long long int length, long long int width)
+{
+    long long int y, x, lines;
+
+    printf("+---");
+    for(x = 1; x < length; x++)
+        printf("----");
+    printf("+\n");
+    for(lines = 1; lines < width << 1; lines++)
+    {
+        y = (lines >> 1) * length;
+        // draw vertical wall.
+        if(lines % 2)
+        {
+            for(x = 0; x < length; x++)
+                maze[y + x] & _FLAG_WEST_PASS ? printf("    ") : printf("|   ");
+        }
+        else {
+            // draw horizontal wall.
+            maze[y] & _FLAG_NORTH_PASS ? printf("|   ") : printf("|---");
+            for(x = 1; x < length; x++)
+            {
+                if(maze[y - length + x] & _FLAG_WEST_PASS && maze[y + x] & _FLAG_WEST_PASS)
+                    printf("-");
+                else if(!(maze[y - 1 + x] & _FLAG_NORTH_PASS) && !(maze[y + x] & _FLAG_NORTH_PASS))
+                    printf("-");
+                else if(maze[y - 1 + x] & _FLAG_NORTH_PASS && maze[y + x] & _FLAG_NORTH_PASS)
+                    printf("|");
+                else if(!(maze[y - length + x] & _FLAG_WEST_PASS) && !(maze[y + x] & _FLAG_WEST_PASS))
+                    printf("|");
+                else
+                    printf("+");
+                maze[y + x] & _FLAG_NORTH_PASS ? printf("   ") : printf("---");
+            }
+        }
+        printf("|\n");
+    }
+    printf("+---");
+    for(x = 1; x < length; x++)
+        printf("----");
+    printf("+\n");
+}
