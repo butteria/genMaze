@@ -3,7 +3,7 @@
 #include <locale.h>
 
 // seperate it into two parts, the up-side and down-side.
-const wchar_t *block_fonts[26][2] = {
+static const wchar_t *block_fonts[27][2] = {
    { L"▄▀▄", L"█▀█"  },    // A, a
    { L"█▄▄", L"█▄█" },     // B, b
    { L"█▀▀", L"█▄▄" },     // C, c
@@ -12,7 +12,7 @@ const wchar_t *block_fonts[26][2] = {
    { L"█▀▀", L"█▀▀" },     // F, f
    { L"█▀▀", L"█▄█" },     // G, g
    { L"█▄█", L"█▀█" },     // H, h
-   { L" █ ", L" █ " },     // I, i
+   { L"█", L"█" },         // I, i
    { L"▀█▀", L"▄█ " },     // J, j
    { L"█▄▀", L"█▀▄" },     // K, k
    { L"█  ", L"█▄▄" },     // L, l
@@ -30,6 +30,7 @@ const wchar_t *block_fonts[26][2] = {
    { L"▀▄▀", L"█ █" },     // X, x
    { L"█▄█", L" █ " },     // Y, y
    { L"▀▀█", L"▄█▄" },     // Z, z
+   { L" ", L" " },         // Space
 };
 
 void
@@ -42,9 +43,10 @@ predo(char *str)
             str[j++] = str[i] + 32;
         else if(c >= 'a' && c <= 'z')
             str[j++] = str[i];
+        else if(c == ' ')
+            str[j++] = 123;
     }
     str[j] = '\0';
-    puts(str);
 }
 int
 convert2block(char *str)
@@ -64,14 +66,5 @@ convert2block(char *str)
         wprintf(L"%ls ", block_fonts[c - 'a'][1]);
     wprintf(L"\n");
 
-    return 1;
-}
-
-int
-main(int argc, char *argv[])
-{
-    char str[10];
-    while(scanf("%s", &str) != EOF)
-        convert2block(str);
     return 1;
 }

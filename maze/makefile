@@ -1,9 +1,9 @@
+.PHONY: clean
+
 TARGET	 = maze
 SOURCE	 = $(wildcard *.c)
 OBJS 	 = $(patsubst %.c, %.o, $(SOURCE))
 INC 	 = -I.
-
-CC		:=gcc
 
 $(TARGET):$(OBJS)
 	$(CC) $(OBJS) -o $(TARGET)
@@ -14,4 +14,3 @@ $(OBJ): $(SRC)
 
 clean:
 	rm -rf *.o  $(TARGET)
-.PHONY: clean ALL
