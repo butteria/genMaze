@@ -51,7 +51,7 @@ predo(char *str)
 int
 convert2block(char *str)
 {
-    int i, j, c;
+    int i, c;
     _setmode(_fileno(stdout), _O_U8TEXT);
     setlocale(LC_ALL, "");
 
