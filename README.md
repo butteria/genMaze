@@ -1,5 +1,6 @@
-### compile file
-gcc -o maze main.c maze.c
+## Compile file
+- gcc -o maze main.c maze.c
+```
 +---------------------------------------+
 |       |                               |
 |   |   |-------------------+   |   |   |
@@ -21,3 +22,6 @@ gcc -o maze main.c maze.c
 |   |   |   +---+   |   |   |   +-------|
 |       |           |       |           |
 +---------------------------------------+
+```
+## Run cli
+```./maze --length 10 --width 20```
